@@ -1,6 +1,7 @@
 const express = require('express');
 const { User } = require('../models/User.model');
 const { Expense } = require('../models/Expense.model');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -9,13 +10,28 @@ router.get('/', async (req, res) => {
     const { userId, from, to, categories } = req.query;
     const where = {};
 
-    if (userId) where.userId = userId;
-    if (from || to) where.spentAt = {};
-    if (from) where.spentAt['$gte'] = new Date(from);
-    if (to) where.spentAt['$lte'] = new Date(to);
-    if (categories) where.category = categories.split(',');
+    if (userId) {
+      where.userId = userId;
+    }
+
+    if (from || to) {
+      where.spentAt = {};
+    }
+
+    if (from) {
+      where.spentAt[Op.gte] = new Date(from);
+    }
+
+    if (to) {
+      where.spentAt[Op.lte] = new Date(to);
+    }
+
+    if (categories) {
+      where.category = { [Op.in]: categories.split(',') };
+    }
 
     const expenses = await Expense.findAll({ where });
+
     res.json(expenses);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -23,7 +39,6 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  const id = req.params.id;
   try {
     const expense = await Expense.findByPk(req.params.id);
 
@@ -45,15 +60,16 @@ router.post('/', async (req, res) => {
       userId === undefined ||
       spentAt === undefined ||
       !title ||
-      amount === undefined ||
-      !category
+      amount === undefined
     ) {
       return res.status(400).json({ error: "Обов'язкові поля не заповнені" });
     }
 
     const user = await User.findByPk(userId);
-    if (!user)
+
+    if (!user) {
       return res.status(400).json({ message: 'Користувача не знайдено' });
+    }
 
     const newExpense = await Expense.create({
       userId,
@@ -63,6 +79,7 @@ router.post('/', async (req, res) => {
       category,
       note,
     });
+
     res.status(201).json(newExpense);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -79,7 +96,13 @@ router.patch('/:id', async (req, res) => {
 
     const { spentAt, title, amount, category, note } = req.body;
 
-    await expense.update({ spentAt, title, amount, category, note });
+    await expense.update({
+      spentAt,
+      title,
+      amount,
+      category,
+      note,
+    });
     res.json(expense);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -89,7 +112,10 @@ router.patch('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const expense = await Expense.findByPk(req.params.id);
-    if (!expense) return res.status(404).json({ message: 'Expense not found' });
+
+    if (!expense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
 
     await expense.destroy();
     res.sendStatus(204);

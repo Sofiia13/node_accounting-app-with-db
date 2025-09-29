@@ -5,7 +5,6 @@
 const { createServer } = require('./createServer');
 
 const { sequelize } = require('./db.js');
-const { User } = require('./models/User.model.js');
 
 (async () => {
   try {

@@ -2,18 +2,24 @@
 
 const { sequelize } = require('../db.js');
 const { DataTypes } = require('sequelize');
+const { User } = require('./User.model');
 
 const Expense = sequelize.define(
   'Expense',
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
     },
     title: {
       type: DataTypes.STRING,
@@ -41,6 +47,9 @@ const Expense = sequelize.define(
     timestamps: false,
   },
 );
+
+User.hasMany(Expense, { foreignKey: 'userId', onDelete: 'CASCADE' });
+Expense.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
 
 module.exports = {
   Expense,
