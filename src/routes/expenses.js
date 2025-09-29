@@ -94,15 +94,20 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Витрату не знайдено' });
     }
 
-    const { spentAt, title, amount, category, note } = req.body;
+    const updates = {};
+    if (Object.prototype.hasOwnProperty.call(req.body, 'spentAt'))
+      updates.spentAt = req.body.spentAt;
+    if (Object.prototype.hasOwnProperty.call(req.body, 'title'))
+      updates.title = req.body.title;
+    if (Object.prototype.hasOwnProperty.call(req.body, 'amount'))
+      updates.amount = req.body.amount;
+    if (Object.prototype.hasOwnProperty.call(req.body, 'category'))
+      updates.category = req.body.category;
+    if (Object.prototype.hasOwnProperty.call(req.body, 'note'))
+      updates.note = req.body.note;
 
-    await expense.update({
-      spentAt,
-      title,
-      amount,
-      category,
-      note,
-    });
+    await expense.update(updates);
+
     res.json(expense);
   } catch (err) {
     res.status(500).json({ error: err.message });
